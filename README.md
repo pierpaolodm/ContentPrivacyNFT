@@ -16,7 +16,7 @@ The goal of this project is to design and implement a framework for publishing N
 ### Recommandations
 Since the snarks usually take a long time to generate, it is recommended to unlock `nodejs` memory limit by running the following command:
 ```bash
-export NODE_OPTIONS=--max-old-space-size=#[memory MB]
+export NODE_OPTIONS="--max-old-space-size=8192" # 8 GB as example
 ```
 Morover follow the recommandations provided in the following [link](https://hackmd.io/V-7Aal05Tiy-ozmzTGBYPA?view#Best-Practices-for-Large-Circuits) to improve the performance of the snarks generation.
 
