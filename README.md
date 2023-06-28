@@ -60,3 +60,6 @@ To generate a proof for an image `tux.png`, with a frame size of 32 pixels, and 
 ```bash
 ./image_proof.py --image ./input/tux.png --operation resize_22x22 --frame-pixel 32 --save-tiles ./output/tiles --save-image ./output/penguin_32.png --generate-csv --generate-contract
 ```
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/PIERdemo/ContentPrivacyNFT/blob/main/LICENSE) file for details.
