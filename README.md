@@ -33,7 +33,6 @@ After that ensure that the following directories exist:
 │       └── poseidon2
 ├── input
 ├── output
-├── powersoftau
 ├── scripts
 │   ├── image_ops
 │   └── proving_system
