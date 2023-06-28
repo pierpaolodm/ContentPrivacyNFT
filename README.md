@@ -39,4 +39,25 @@ After that ensure that the following directories exist:
 │   └── proving_system
 ```
 ## Usage
-TODO
+To generate an image proof, use the following command:
+
+```bash
+./image_proof.py --image <image_path> --operation <operation_info> --frame-pixel <frame_pixel> [--check-pixel <check_pixel>] [--save-tiles <save_tiles_path>] [--save-image <save_image_path>] [--generate-csv] [--generate-contract]
+```
+
+- `<image_path>`: Path to the image file for which you want to generate the proof. Only PNG images are supported.
+- `<operation_info>`: Image operation to perform. Currently, only "resize" operation is implemented. Specify the dimensions of the operation in the format `<height>x<width>`. For example, "resize_22x22" will resize the image to 22x22 pixels.
+- `<frame_pixel>`: Number of pixels to divide in the greatest dimension of the frame.
+- `<check_pixel>` : Maximum number of pixels to divide in order to respect a threshold. If specified, the script will calculate the maximum number of pixels per frame based on the threshold and print the result.
+- `<save_tiles_path>` (optional): Path to save the frames as individual images.
+- `<save_image_path>` (optional): Path to save the low-resolution image.
+- `--generate-csv` (optional): Generate a CSV file with time and memory usage for each frame.
+- `--generate-contract` (optional): Generate a contract in Solidity for verifying the proof on Ethereum.
+
+**Example Usage:**
+
+To generate a proof for an image `tux.png`, with a frame size of 32 pixels, and save the frames and low-resolution image that is in this case the resize of the original image to 22x22 pixels, use the following command:
+
+```bash
+./image_proof.py --image ./input/tux.png --operation resize_22x22 --frame-pixel 32 --save-tiles ./output/tiles --save-image ./output/penguin_32.png --generate-csv --generate-contract
+```
