@@ -4,5 +4,5 @@
 /output
 /powersoftau
 /snarkjs_circuit
-__pycache__/
-tiles/
+**/__pycache__/
+/circuits/tiles/
