@@ -1,0 +1,2 @@
+# Output Folder
+In this folder you will find the output of the project, including the generated snarks and the proof of the image. The image modified and all the tiles are also stored in this folder. Morover if required it will be also present the csv file containing the performances.

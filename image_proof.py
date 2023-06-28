@@ -6,8 +6,10 @@ from scripts.image_ops.image_splitter import max_pixels_per_frame, slice_image
 from scripts.image_ops.image_transformation import extract_image_vector, resize_image
 from scripts.util import append_to_csv, generate_circuit, generate_input, measure_command, parse_operation
 
-
+# Modify this to change the powers of tau file
 POT = f'25.pot'
+
+
 CIRCUIT_NAME = 'image'
 JSON_INPUT = 'input.json'
 
@@ -56,7 +58,7 @@ def generate_proof(image_path, frame_pixel, operation, operation_info, save_tile
         tv, mv = measure_command(f'./scripts/proving_system/verifier.sh {CIRCUIT_NAME}_{i} {f"--generate-contract {i}" if generate_contract else ""}')
 
         if generate_csv:
-            csv_path = f'./{CIRCUIT_NAME}.csv'
+            csv_path = f'./output/{CIRCUIT_NAME}.csv'
             row = {'frame':i,'time_circuit':tc,'memory_circuit':mc,'time_setup':tsp,'memory_setup':msp,
                    'time_prover':tp,'memory_prover':mp,'time_verifier':tv,'memory_verifier':mv}
             append_to_csv(row,csv_path)

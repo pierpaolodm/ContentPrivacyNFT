@@ -1,7 +1,15 @@
 /compiled_circuit
 /image.csv
-/input
-/output
+/compiled_circuit
+/image.csv
+/input/**
+!/input/README.md
+/output/**
+!/output/README.md
+/powersoftau
+/snarkjs_circuit
+**/__pycache__/
+/circuits/tiles/
 /powersoftau
 /snarkjs_circuit
 **/__pycache__/
