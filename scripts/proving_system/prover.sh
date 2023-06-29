@@ -4,11 +4,11 @@ if [ $# -ne 1 ]; then
 fi
 
 CIRCUIT_NAME=$1
-CIRCUIT_DIR=$(readlink -f ./compiled_circuit/compiled_${CIRCUIT_NAME})
+CIRCUIT_DIR=$(readlink -f ./output/compiled_circuit/compiled_${CIRCUIT_NAME})
 WITNESS="${CIRCUIT_DIR}/${CIRCUIT_NAME}_witness.wtns"
 RAPIDSNARK=/home/${USER}/Programs/RapidSnark/build/prover
 
-cd snarkjs_circuit/${CIRCUIT_NAME}
+cd output/snarkjs_circuit/${CIRCUIT_NAME}
 
 if [ -f "$RAPIDSNARK" ]; then
     ${RAPIDSNARK} circuit_final.zkey ${WITNESS} proof.json public.json

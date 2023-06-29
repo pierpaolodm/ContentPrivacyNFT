@@ -5,9 +5,9 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-VERIFICATION_KEY=$(readlink -f ./snarkjs_circuit/${1}/verification_key.json)
-PUBLIC=$(readlink -f ./snarkjs_circuit/${1}/public.json)
-PROOF=$(readlink -f ./snarkjs_circuit/${1}/proof.json)
+VERIFICATION_KEY=$(readlink -f ./output/snarkjs_circuit/${1}/verification_key.json)
+PUBLIC=$(readlink -f ./output/snarkjs_circuit/${1}/public.json)
+PROOF=$(readlink -f ./output/snarkjs_circuit/${1}/proof.json)
 
 snarkjs groth16 verify ${VERIFICATION_KEY} ${PUBLIC} ${PROOF}
 
@@ -18,6 +18,6 @@ if [ "$2" == "--generate-contract" ]; then
     fi
 
     CONTRACT_NAME="$3"
-    ZKEY=$(readlink -f ./snarkjs_circuit/${1}/circuit_final.zkey)
-    snarkjs zkey export solidityverifier ${ZKEY} ./snarkjs_circuit/${1}/Verifier_${CONTRACT_NAME}.sol
+    ZKEY=$(readlink -f ./output/snarkjs_circuit/${1}/circuit_final.zkey)
+    snarkjs zkey export solidityverifier ${ZKEY} ./output/snarkjs_circuit/${1}/Verifier_${CONTRACT_NAME}.sol
 fi

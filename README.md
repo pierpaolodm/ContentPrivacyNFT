@@ -58,7 +58,7 @@ To generate an image proof, use the following command:
 To generate a proof for an image `tux.png`, with a frame size of 32 pixels, and save the frames and low-resolution image that is in this case the resize of the original image to 22x22 pixels, use the following command:
 
 ```bash
-./image_proof.py --image ./input/tux.png --operation resize_22x22 --frame-pixel 32 --save-tiles ./output/tiles --save-image ./output/penguin_32.png --generate-csv --generate-contract
+./image_proof.py --image ./input/tux.png --operation resize_22x22 --frame-pixel 32 --save-tiles ./output/tiles --save-image ./output/resize_tux.png --generate-csv --generate-contract
 ```
 ## License
 

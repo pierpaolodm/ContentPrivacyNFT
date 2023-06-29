@@ -24,24 +24,24 @@ CIRCOM_FILENAME=${filename%.*}
 echo "Compiling circuit [${CIRCOM_FILENAME}] ..."
 
 # rm -rf compiled_circuit
-mkdir -p compiled_circuit > /dev/null
-mkdir -p compiled_circuit/compiled_${CIRCOM_FILENAME} > /dev/null
+mkdir -p output/compiled_circuit > /dev/null
+mkdir -p output/compiled_circuit/compiled_${CIRCOM_FILENAME} > /dev/null
 
 # Compile the circuits in the circuit directory
 #circom ${1} --r1cs --wasm --c --sym --output compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH} --O1
 
-circom ${1} --r1cs --c --output compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH} --O1
+circom ${1} --r1cs --c --output output/compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH} --O1
 
 if [[ $* == *--nodejs* ]]; then
     echo "Compiling with [NodeJS] ..."
-    cd compiled_circuit/compiled_${CIRCOM_FILENAME}/${CIRCOM_FILENAME}_js
+    cd output/compiled_circuit/compiled_${CIRCOM_FILENAME}/${CIRCOM_FILENAME}_js
     node generate_witness.js ${CIRCOM_FILENAME}.wasm ../../../${2} ../${CIRCOM_FILENAME}_witness.wtns
 else
     echo "Compiling with [Cpp] ..."
-    cd compiled_circuit/compiled_${CIRCOM_FILENAME}/${CIRCOM_FILENAME}_cpp
+    cd output/compiled_circuit/compiled_${CIRCOM_FILENAME}/${CIRCOM_FILENAME}_cpp
     make
     
-    ./${CIRCOM_FILENAME} ../../../${2} ../${CIRCOM_FILENAME}_witness.wtns
+    ./${CIRCOM_FILENAME} ../../../../${2} ../${CIRCOM_FILENAME}_witness.wtns
 fi
 
 echo "Witness generated [${CIRCOM_FILENAME}_witness.wtns]"
