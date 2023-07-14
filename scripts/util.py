@@ -1,5 +1,6 @@
 from csv import DictWriter
 import os
+import secrets
 import subprocess
 
 
@@ -77,3 +78,14 @@ def append_to_csv(row,csv_path):
             dict_writer.writeheader()
             
         dict_writer.writerow(row)
+
+def generate_random_field_element(p=None):
+    """
+    Generate a random field element in the range [0,p) where p is the bn128 prime as default
+    :param p: prime number
+    :return: random field element
+    """
+    if p is None:
+        p = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+    return secrets.randbelow(p)
+    
