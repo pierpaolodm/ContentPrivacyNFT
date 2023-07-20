@@ -53,7 +53,7 @@ template Image(hFull, wFull, hTile, wTile, hResize, wResize, leaf, num_leaves){
     signal input encoded_master_key0[3];
     signal input encoded_master_key1[3];
 
-    signal output encrypted_image[hFull*wFull*3];
+    signal output encrypted_image[wTile*hTile*3];
     signal output tag_image;
 
     //com_master_key[i] = {c1.x,c1.y,c2.x,c2.y,xIncrement}
