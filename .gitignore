@@ -14,6 +14,7 @@
 /snarkjs_circuit
 **/__pycache__/
 /circuits/tiles/
-/scripts/encode_message/**
-!/scripts/encode_message/elgamal_message.ts
-!/scripts/encode_message/package.json
+/scripts/elgamal_utils/**
+!/scripts/elgamal_utils/elgamal_message.ts
+!/scripts/elgamal_utils/elgamal_keys.ts
+!/scripts/elgamal_utils/package.json
