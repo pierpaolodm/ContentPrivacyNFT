@@ -1,0 +1,18 @@
+{
+    "name": "elgamal-babyjub",
+    "version": "0.0.1",
+    "description": "",
+    "main": "index.js",
+    "license": "MIT",
+    "dependencies": {
+      "@types/jest": "^26.0.14",
+      "@types/node": "^14.11.2",
+      "assert": "^2.0.0",
+      "circomlib": "0.2.4",
+      "maci-crypto": "^0.10.0",
+      "typescript": "^4.0.3",
+      "maci-circuits":"0.7.4",
+      "circomlibjs": "^0.1.2"
+    }
+  }
+  

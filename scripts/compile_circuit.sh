@@ -23,15 +23,15 @@ CIRCOM_FILENAME=${filename%.*}
 
 echo "Compiling circuit [${CIRCOM_FILENAME}] ..."
 
-# rm -rf compiled_circuit
+# Create the output directory if it doesn't exist
 mkdir -p output/compiled_circuit > /dev/null
 mkdir -p output/compiled_circuit/compiled_${CIRCOM_FILENAME} > /dev/null
 
 # Compile the circuits in the circuit directory
-#circom ${1} --r1cs --wasm --c --sym --output compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH} --O1
 
-circom ${1} --r1cs --c --output output/compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH} --O1
+circom ${1} --r1cs --c --output output/compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH}
 
+# Generate the witness
 if [[ $* == *--nodejs* ]]; then
     echo "Compiling with [NodeJS] ..."
     cd output/compiled_circuit/compiled_${CIRCOM_FILENAME}/${CIRCOM_FILENAME}_js

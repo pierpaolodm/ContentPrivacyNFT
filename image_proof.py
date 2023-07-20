@@ -120,8 +120,7 @@ def main():
 
     if args.check_pixel:
         dimension,max_pixels = max_pixels_per_frame(args.image, args.check_pixel**2*3)
-        print(f'Max pixels per frame are {max_pixels} to divide the {["height", "width"][dimension]}\
-               in order to have a computation that respects the threshold of {args.check_pixel}')
+        print(f'Max pixels per frame are {max_pixels} to divide the {["height", "width"][dimension]} in order to have a computation that respects the threshold of {args.check_pixel}')
         return
 
     if args.frame_pixel:
