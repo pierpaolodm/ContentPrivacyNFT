@@ -24,6 +24,14 @@ interface ElGamalCiphertext {
     xIncrement: BigInt;
 }
 
+/*
+* Converts a BigInt into a Message.
+* The Message is a BabyJub point and an x-increment.
+* The x-increment is the difference between the x-value of the
+* BabyJub point and the original value.
+* @param original The original value to convert.
+* @param randomVal The random value to use for the ElGamal encryption.
+*/
 const encodeToMessage = (original: BigInt, randomVal:BigInt = genRandomSalt()):
 Message => {
      const randomPoint = genPubKey(randomVal)
