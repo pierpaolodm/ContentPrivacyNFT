@@ -65,19 +65,19 @@ template Image(hFull, wFull, hTile, wTile, hResize, wResize, leaf, num_leaves){
     master_key1 === encoded_master_key1[0] - encoded_master_key1[2];
 
     //** encrypt the image
-    component enc = ENC_Ciminion(wFull * hFull * 3);
+    component enc = ENC_Ciminion(wTile * hTile * 3);
     enc.master_key0 <== master_key0;
     enc.master_key1 <== master_key1;
     enc.nonce <== nonce;
     enc.IV <== IV;
 
-    for(var i=0; i<wFull; i++)
-        for(var j=0; j<hFull; j++)
+    for(var i=0; i<wTile; i++)
+        for(var j=0; j<hTile; j++)
             for(var k=0; k<3; k++)
-                enc.plain_text[i*hFull*3 + j*3 + k] <== full_image[i][j][k];
+                enc.plain_text[i*hTile*3 + j*3 + k] <== full_image[i][j][k];
 
         //get encryption output and tag, since it is an authenticated encryption scheme
-    for(var i=0; i<wFull*hFull*3; i++)
+    for(var i=0; i<wTile*hTile*3; i++)
         encrypted_image[i] <== enc.cipher_text[i];
     tag_image <== enc.tag;
 
