@@ -122,9 +122,27 @@ def elgamal_message(operation_values,encode = True):
     else:
         operation = f'--decode {operation_values["x"]} {operation_values["y"]} {operation_values["xIncrement"]}'
 
-    encoded_message = subprocess.getoutput(f'tsc ./scripts/encode_message/elgamal_message.ts && \
-                                             node ./scripts/encode_message/elgamal_message.js \
+    encoded_message = subprocess.getoutput(f'tsc ./scripts/elgamal_utils/elgamal_message.ts && \
+                                             node ./scripts/elgamal_utils/elgamal_message.js \
                                              {operation}')
     return encoded_message
 
+def generate_parameters(output_path):
+    """
+    Generate the parameters for the encryption scheme and commitment scheme
+    :param output_path: path to the output file
+    """
+    pub_key,priv_key = subprocess.getoutput(f'tsc ./scripts/elgamal_utils/elgamal_keys.ts && \
+                           node ./scripts/elgamal_utils/elgamal_keys.js').split('|')
+    pub_key = pub_key.split(',')
+    parameters = {'elgamal_public_key':[int(x) for x in pub_key],
+                  'elgamal_private_key':int(priv_key),
+                  'elgamal_randomness':generate_random_field_element(),
+                  'ciminion_keys':[generate_random_field_element(),generate_random_field_element()]}
+    with open(output_path, 'w') as outfile:
+        json.dump(parameters, outfile)
+    
 
+
+if __name__ == '__main__':
+    generate_parameters('./input/parameters.json')

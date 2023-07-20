@@ -1,0 +1,25 @@
+{
+    "name": "optimisedmt",
+    "version": "0.0.7",
+    "description": "An incremental Merkle tree with optimsed updates",
+    "main": "build/index.js",
+    "scripts": {
+        "watch": "tsc --watch",
+        "build": "tsc --build",
+        "test": "jest OptimisedMT.test.ts",
+        "test-debug": "node --inspect-brk ./node_modules/.bin/jest OptimisedMT.test.ts"
+    },
+    "author": "Koh Wei Jie",
+    "devDependencies": {
+        "@types/jest": "^27.0.1",
+        "@types/node": "^16.7.10",
+        "jest": "^27.0.6",
+        "ts-jest": "^27.0.7",
+        "typescript": "^4.3.5"
+    },
+    "dependencies": {
+        "circomlibjs": "0.0.8",
+        "assert": "^2.0.0",
+        "ffjavascript": "^0.2.39"
+    }
+}

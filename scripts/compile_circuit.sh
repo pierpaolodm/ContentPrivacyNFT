@@ -12,7 +12,6 @@ fi
 
 #define the base path for the circuit library
 CIRCOMLIB_PATH=/home/${USER}/node_modules
-LOCAL_PATH=$(readlink -f $(dirname $1))
 
 #get the file name without the extension
 filename=$(basename -- "$1")
@@ -29,7 +28,7 @@ mkdir -p output/compiled_circuit/compiled_${CIRCOM_FILENAME} > /dev/null
 
 # Compile the circuits in the circuit directory
 
-circom ${1} --r1cs --c --output output/compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} -l ${LOCAL_PATH}
+circom ${1} --r1cs --c --output output/compiled_circuit/compiled_${CIRCOM_FILENAME} -l ${CIRCOMLIB_PATH} 
 
 # Generate the witness
 if [[ $* == *--nodejs* ]]; then
