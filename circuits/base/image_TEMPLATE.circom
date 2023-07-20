@@ -71,10 +71,10 @@ template Image(hFull, wFull, hTile, wTile, hResize, wResize, leaf, num_leaves){
     enc.nonce <== nonce;
     enc.IV <== IV;
 
-    for(var i=0; i<wTile; i++)
-        for(var j=0; j<hTile; j++)
+    for(var i=0; i<hTile; i++)
+        for(var j=0; j<wTile; j++)
             for(var k=0; k<3; k++)
-                enc.plain_text[i*hTile*3 + j*3 + k] <== full_image[start_width + i][start_height + j][k];
+                enc.plain_text[i*wTile*3 + j*3 + k] <== full_image[start_height + i][start_width + j][k];
 
         //get encryption output and tag, since it is an authenticated encryption scheme
     for(var i=0; i<wTile*hTile*3; i++)
