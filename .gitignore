@@ -18,3 +18,5 @@
 !/scripts/elgamal_utils/elgamal_message.ts
 !/scripts/elgamal_utils/elgamal_keys.ts
 !/scripts/elgamal_utils/package.json
+.vscode/
+/scripts/image_ops/image_decrypt/ciminion_decrypt/bin/
