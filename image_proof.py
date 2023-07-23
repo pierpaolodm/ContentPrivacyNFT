@@ -5,7 +5,7 @@ import json
 import os
 from scripts.image_ops.image_splitter import max_pixels_per_frame, slice_image
 from scripts.image_ops.image_transformation import extract_image_vector, resize_image
-from scripts.util import append_to_csv, generate_circuit, generate_input, generate_parameters, measure_command, parse_operation
+from scripts.util import append_to_csv, generate_circuit, generate_input, generate_parameters, measure_command, parse_operation, upload_proof
 
 # Modify this to change the powers of tau file
 POT = f'25.pot'
@@ -150,7 +150,7 @@ CIRCUIT_NAME = 'image'
 JSON_INPUT = 'input.json'
 
 
-def generate_proof(image_path, frame_pixel, operation, operation_info, proof_parameters, save_tiles=None, save_image=None ,generate_csv=False, generate_contract=False):
+def generate_proof(image_path, frame_pixel, operation, operation_info, proof_parameters, save_tiles=None, save_image=None ,generate_csv=False, generate_contract=False, to_IPFS=False):
     """
     Generate proof for image transformation and print the time and memory usage of each image frame
     :param image_path: path to image
@@ -181,12 +181,17 @@ def generate_proof(image_path, frame_pixel, operation, operation_info, proof_par
     with open(proof_parameters, 'r') as file:
         proof_input = json.load(file)
 
+    if to_IPFS and proof_input['PINATA_JWT'] == 'Insert the JWT here before upload the proof to IPFS':
+        raise ValueError('Insert the JWT in the proof parameters before upload the proof to IPFS')
+
+
     generate_input(f'input/{JSON_INPUT}', full_image, low_image,
                    {'public_key':proof_input['elgamal_public_key'],'randomness':proof_input['elgamal_randomness']},proof_input['ciminion_keys'])
 
     frame_list = slice_image(image_path, frame_pixel, save_tiles=save_tiles, dimension=None)
     for i,frame in enumerate(frame_list):
         Theight,Twidth = frame.shape[:2]
+        
         output_circuit = generate_circuit({ 'ThFull':Fheight,'TwFull':Fwidth,'ThTile':Theight,'TwTile':
                                             Twidth,'ThResize':Lheight,'TwResize':Lwidth,
                                             'Tleaf':i,'Tnum_leaves':len(frame_list)},
@@ -202,14 +207,17 @@ def generate_proof(image_path, frame_pixel, operation, operation_info, proof_par
             row = {'frame':i,'time_circuit':tc,'memory_circuit':mc,'time_setup':tsp,'memory_setup':msp,
                    'time_prover':tp,'memory_prover':mp,'time_verifier':tv,'memory_verifier':mv}
             append_to_csv(row,csv_path)
+        
+    if to_IPFS:
+        upload_proof(f'./output/snarkjs_circuit/',proof_input['PINATA_JWT'] ,
+                     {'name':os.path.basename(image_path).split('.')[0],'height':Fheight,'width':Fwidth,'tiles':i},save_image)
 
 
 
 ###############################################################
 ##              MAIN FOR PARSING ARGUMENTS                   ##
 ###############################################################
-#./image_proof.py --image ./input/penguin.png --operation resize_22x22 --frame-pixel 32 --save-tiles ./output/tiles --save-image ./output/penguin_32.png --generate-csv --generate-contract
-
+#./image_proof.py --image ./input/ramen.png --operation resize_22x22 --frame-pixel 8 --save-tiles ./output/tiles --save-image ./output/ramen_22.png --generate-csv --to_IPFS --proof-parameters ./input/parameters.json 
 def main():
     parser = argparse.ArgumentParser(description='Generate image proof')
     parser.add_argument('--image',
@@ -247,9 +255,13 @@ def main():
                         help='path to proof parameters',
                         default=None)
     
+    parser.add_argument('--to_IPFS',
+                        help='upload the proof to IPFS',
+                        action='store_true')
+    
     exclusive_group = parser.add_mutually_exclusive_group()
     exclusive_group.add_argument('--generate-parameters',
-                             help='file path name in which parameters for the encryption scheme and commitment scheme will be generated, used also to the proof',
+                             help='file path name in which parameters for the encryption scheme and commitment scheme will be generated, used also to the proof, it also could be insert the pinata JWT to upload the proof to IPFS',
                              nargs='?', 
                              const='./input/parameters.json')  
 
@@ -258,6 +270,7 @@ def main():
     if args.generate_parameters:
         if not args.generate_parameters.endswith('.json'):
             parser.error('generate_parameters must be a json file')
+
         generate_parameters(args.generate_parameters)
         return
 
@@ -284,7 +297,7 @@ def main():
 
     if args.frame_pixel:
         operation,operation_info = parse_operation(args.operation)
-        generate_proof(args.image, args.frame_pixel,operation, operation_info, args.proof_parameters, args.save_tiles, args.save_image, args.generate_csv, args.generate_contract)
+        generate_proof(args.image, args.frame_pixel,operation, operation_info, args.proof_parameters, args.save_tiles, args.save_image, args.generate_csv, args.generate_contract,args.to_IPFS)
 
 
 

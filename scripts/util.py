@@ -1,10 +1,12 @@
 from csv import DictWriter
 import json
 import os
+from pathlib import Path
 import secrets
 import subprocess
-
+import cv2
 import numpy as np
+import requests
 
 
 def measure_command(command):
@@ -138,11 +140,118 @@ def generate_parameters(output_path):
     parameters = {'elgamal_public_key':[int(x) for x in pub_key],
                   'elgamal_private_key':int(priv_key),
                   'elgamal_randomness':generate_random_field_element(),
-                  'ciminion_keys':[generate_random_field_element(),generate_random_field_element()]}
+                  'ciminion_keys':[generate_random_field_element(),generate_random_field_element()],
+                  'PINATA_JWT':'Inset the JWT here before upload the proof to IPFS'}
     with open(output_path, 'w') as outfile:
         json.dump(parameters, outfile)
+
+def upload_proof(proof_path, JWT, image_info, lowimage_path, verbose=False):
+    """
+    Uploads the proof to IPFS and returns the IPFS link
+    :param proof_path: path to the proof
+    :param JWT: JWT for pinata
+    :param image_info: image info dictionary
+    :param lowimage_path: path to the low image
+    :param verbose: if True prints the IPFS link
+    :return: IPFS link
+    """
+    PINATA_BASE_URL = "https://api.pinata.cloud"
+    PINATA_UPLOAD_URL = f"{PINATA_BASE_URL}/pinning/pinFileToIPFS"
+    PINATA_WATCH_URL = f"https://gateway.pinata.cloud/ipfs/"
+
+    HEADERS = {"Authorization": f"Bearer {JWT}"}
+
+    image_info_file = f'{image_info["name"]}/image_info.json'
+    files = [('file', (image_info_file, json.dumps(image_info), "application/json")),
+             ('file', (f'{image_info["name"]}/low_img.png', open(lowimage_path, "rb"), "image/png"))]
+
+    for tile_proof_dir in Path(proof_path).iterdir():
+        tile_proof_dir = str(tile_proof_dir)
+        tile_number = tile_proof_dir.split('_')[-1]
+
+        proof_file_path = tile_proof_dir + '/proof.json'
+        proof_file_name = f'{image_info["name"]}/tile_{tile_number}/proof.json'
+
+        public_file_path = tile_proof_dir + '/public.json'
+        public_file_name = f'{image_info["name"]}/tile_{tile_number}/public.json'
+
+        vkey_file_path = tile_proof_dir + '/verification_key.json'
+        vkey_file_name = f'{image_info["name"]}/tile_{tile_number}/vkey.json'
+
+        files.extend([ ('file', (proof_file_name, open(proof_file_path, "rb"), "application/json")),
+                      ('file', (public_file_name, open(public_file_path, "rb"), "application/json")),
+                      ('file', (vkey_file_name, open(vkey_file_path, "rb"), "application/json"))])
+        
+    response = requests.post(PINATA_UPLOAD_URL, files=files, headers=HEADERS)
     
+    if verbose:
+        if response.status_code == 200:
+            print(f"Uploaded {image_info['name']} to IPFS {PINATA_WATCH_URL}/{response.json()['IpfsHash']}")
+            return response.json()['IpfsHash']
+        else:
+            print(f"Error uploading {image_info['name']} to IPFS")
+            print(response.json())
+            return  None
+
+    if response.status_code != 200:
+        raise ValueError(f"Error uploading {image_info['name']} to IPFS")
+    
+    return f"{PINATA_WATCH_URL}/{response.json()['IpfsHash']}"
+    
+
+def verify_proof(IPFS_link):
+    """
+    Verify the proof on IPFS
+    :param IPFS_link: IPFS link to the proof
+    :return: True if the proof is valid, False otherwise
+    """
+    image_info_request = requests.get(f'{IPFS_link}/image_info.json')
+    if image_info_request.status_code != 200:
+        print(f'Error downloading image info from {IPFS_link}')
+        return False
+    image_info = image_info_request.json()
+
+    raw_low_image_request = requests.get(f'{IPFS_link}/low_img.png')
+    if raw_low_image_request.status_code != 200:
+        print(f'Error downloading low image from {IPFS_link}')
+        return False
+    raw_low_image = raw_low_image_request.content
+    print('Image info and low image downloaded ...')
+    
+    min_dims_idx = (image_info['height'],image_info['width']).index(min((image_info['height'],image_info['width'])))
+    tile_size = image_info['height'] // (image_info['tiles'] + 1)  if min_dims_idx == 0 else image_info['width'] // (image_info['tiles'] + 1)
+    low_image_offset = 12 + tile_size * 3 * (image_info['height'] if min_dims_idx == 0 else image_info['width'])
+    # 12 because there is the tag, the hash and the commitment (5 values) for each key
+
+    low_array = np.frombuffer(raw_low_image, np.uint8)
+    low_image = cv2.imdecode(low_array, cv2.IMREAD_COLOR).flatten()
+    
+
+    #get the proof for each tile
+    for i in range (image_info['tiles'] + 1):
+        subprocess.getoutput(f'wget -O /tmp/proof{i}.json {IPFS_link}/tile_{i}/proof.json')
+        subprocess.getoutput(f'wget -O /tmp/public{i}.json {IPFS_link}/tile_{i}/public.json')
+        subprocess.getoutput(f'wget -O /tmp/vkey{i}.json {IPFS_link}/tile_{i}/vkey.json')
+        verify_output = subprocess.getoutput(f'snarkjs groth16 verify /tmp/vkey{i}.json /tmp/public{i}.json /tmp/proof{i}.json')
+        
+        #open public.json
+        with open(f'/tmp/public{i}.json', 'r') as file:
+            public = json.load(file)
+        
+        check_low_image = np.array_equal(np.array(public[low_image_offset:low_image_offset + len(low_image)]).astype(np.uint8),
+                                         low_image.astype(np.uint8))
+        
+        if 'OK!' not in verify_output or not check_low_image:
+            print(verify_output)
+            print(f'[Tile {i}] not verified')
+            return False
+        print(f'[Tile {i}] verified')
+        subprocess.getoutput(f'rm /tmp/proof{i}.json /tmp/public{i}.json /tmp/vkey{i}.json')
+    
+    return True
+
 
 
 if __name__ == '__main__':
-    generate_parameters('./input/parameters.json')
+    verify_proof('https://gateway.pinata.cloud/ipfs/QmVaEZmkz38wbrXoxoaM3zk7PjuRqgjGdMFYgL7zgA6eTf')
+
