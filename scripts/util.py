@@ -8,6 +8,8 @@ import cv2
 import numpy as np
 import requests
 
+from scripts.babyjubjub_utils.sapling_jubjub import Fq, Point
+
 
 def measure_command(command):
     """
@@ -104,10 +106,22 @@ def generate_random_field_element(p=None):
     Generate a random field element in the range [0,p) where p is the bn128 prime as default
     :param p: prime number
     :return: random field element
+    reference implemetation: https://github.com/privacy-scaling-explorations/maci/blob/78609349aecd94186216ac8743d61b1cb81a097f/crypto/ts/index.ts#L232
     """
     if p is None:
         p = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-    return secrets.randbelow(p-1) + 1
+    min_val = 6350874878119819312338956282401532410528162663560392320966563075034087161851
+
+    while True:
+        rand_bytes = secrets.token_bytes(32)
+        rand_int = int.from_bytes(rand_bytes, byteorder='big')
+        if rand_int >= min_val:
+            break
+    rand_field_value = rand_int % p
+    if(rand_field_value >= p):
+        raise ValueError("Random value is too large")
+
+    return rand_field_value
     
 
 def elgamal_message(operation_values,encode = True):
@@ -250,8 +264,16 @@ def verify_proof(IPFS_link):
     
     return True
 
-
-
-if __name__ == '__main__':
-    verify_proof('https://gateway.pinata.cloud/ipfs/QmVaEZmkz38wbrXoxoaM3zk7PjuRqgjGdMFYgL7zgA6eTf')
-
+def generate_babyjubjub_keypair():
+    """
+    Generate a babyjubjub keypair
+    :return: tuple with the public and private key
+    """
+    G = Point(Fq(995203441582195749578291179787384436505546430278305826713579947235728471134), 
+              Fq(5472060717959818805561601436314318772137091100104008585924551046643952123905))
+    private_key = generate_random_field_element()
+    public_key = G * Fq(private_key)
+    if not public_key.is_on_curve():
+        raise ValueError("Public key is not on curve")
+    
+    return ((public_key.u.s,public_key.v.s), private_key)
