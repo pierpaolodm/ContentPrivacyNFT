@@ -138,6 +138,8 @@ def main():
         generate_parameters(args.generate_parameters)
         return
 
+    if int(args.frame_pixel) % 2 != 0:
+        parser.error('frame_pixel must be even')
 
     if not args.image or not os.path.exists(args.image) or not args.image.endswith('.png'):
         parser.error('image not found')
