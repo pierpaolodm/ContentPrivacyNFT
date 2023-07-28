@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 from sha3 import keccak_256
 from scripts.babyjubjub_utils.sapling_jubjub import Fq, Point
 from scripts.util import generate_random_field_element
@@ -63,3 +64,29 @@ def otp_message(keys, message):
         otp.append(keys[i] ^ message[i])
     return otp
 
+
+def main():
+    parser = argparse.ArgumentParser(description='Utilities to interact with the Privacy Preserving NFT protocol')
+    parser.add_argument("--generate-keypair",
+                        action="store_true",
+                        help = "generate a keypair (public,private) for babyjubjub curve")
+    
+    parser.add_argument("--DH-key",
+                        nargs=3,
+                        type=int,
+                        help = "get the Diffie-Hellman shared key on babyjubjub curve, providing private_key public_key.x public_key.x")
+    
+    args = parser.parse_args()
+
+    if args.generate_keypair:
+        keypair = generate_keypair()
+        print("Public key: {}".format(keypair[0]))
+        print("Private key: {}".format(keypair[1]))
+
+    if args.DH_key:
+        DH_key = get_DH_key(args.DH_key[0], (args.DH_key[1], args.DH_key[2]))
+        print("Diffie-Hellman key: {}".format(DH_key))
+        
+
+if __name__ == "__main__":
+    main()
