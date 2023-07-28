@@ -29,7 +29,7 @@ def generate_proof(image_path, frame_pixel, operation, operation_info, proof_par
     
     full_image = extract_image_vector(image_path)
     Fheight,Fwidth = full_image.shape[:2]
-
+    
     if operation == 'resize':
         height, width = operation_info['height'], operation_info['width']  
         _,low_image = resize_image(image_path, height,width, output_path=save_image)
@@ -50,9 +50,7 @@ def generate_proof(image_path, frame_pixel, operation, operation_info, proof_par
     if to_IPFS and proof_input['PINATA_JWT'] == 'Insert the JWT here before upload the proof to IPFS':
         raise ValueError('Insert the JWT in the proof parameters before upload the proof to IPFS')
 
-
-    generate_input(f'input/{JSON_INPUT}', full_image, low_image,
-                   {'public_key':proof_input['elgamal_public_key'],'randomness':proof_input['elgamal_randomness']},proof_input['ciminion_keys'])
+    generate_input(f'input/{JSON_INPUT}', full_image, low_image,proof_input['commitment_randomness'],proof_input['ciminion_keys'])
 
     frame_list = slice_image(image_path, frame_pixel, save_tiles=save_tiles, dimension=None)
     for i,frame in enumerate(frame_list):

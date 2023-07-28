@@ -104,7 +104,7 @@ def decrypt_image(parameters_path, full_shape, output_path = './output/decrypted
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Decrypt an image using ciminion_decrypt program')
-    parser.add_argument('--parameters', type=str, help='Path to the parameters.json file, that contains at least the master keys.')
+    parser.add_argument('--parameters', type=str, help='Path to a json file, that contains the master keys.')
     parser.add_argument('--full-shape', type=str, help='Shape of the full image in the form i.e 64x64x3.')
     parser.add_argument('--output-path', type=str, default='./output/decrypted_image.png', help='Path to the output file.')
     parser.add_argument('--base-name', type=str, default='image', help='The base name of the proof folder, for all the tiles.')

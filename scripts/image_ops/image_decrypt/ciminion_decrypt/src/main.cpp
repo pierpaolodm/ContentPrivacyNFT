@@ -106,12 +106,13 @@ int main(int argc, char* argv[]) {
 		}
 
 		//inizialize the ciphertexts, tag, nonce and IV
-		long unsigned int i = 1;
-        for (; i < ciphertext_len + 1; i++)
-			cipher_text[i-1] = to_ZZ_p(conv<ZZ>(data[i].c_str()));
+		long unsigned int i = 2;
 		tag = to_ZZ_p(conv<ZZ>(data[i++].c_str()));
-		nonce = to_ZZ_p(conv<ZZ>(data[data.size() - 4].c_str()));
-		IV = to_ZZ_p(conv<ZZ>(data[data.size() - 3].c_str()));
+        for (; i < ciphertext_len + 3; i++)
+			cipher_text[i-3] = to_ZZ_p(conv<ZZ>(data[i].c_str()));
+		
+		nonce = to_ZZ_p(conv<ZZ>(data[data.size() - 2].c_str()));
+		IV = to_ZZ_p(conv<ZZ>(data[data.size() - 1].c_str()));
 
     }
     catch (const json::exception& e) {
@@ -145,7 +146,6 @@ int main(int argc, char* argv[]) {
 	for (long unsigned int i = 0; i < ciphertext_len - 1; i++)
     	cout << Mseq_dec[i] << ",";
 	cout << Mseq_dec[ciphertext_len - 1] << "]";
-
 
 	return 0;
 	
