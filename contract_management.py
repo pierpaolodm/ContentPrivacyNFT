@@ -74,7 +74,7 @@ def main():
     parser.add_argument("--DH-key",
                         nargs=3,
                         type=int,
-                        help = "get the Diffie-Hellman shared key on babyjubjub curve, providing private_key public_key.x public_key.x")
+                        help = "get the Diffie-Hellman shared key on babyjubjub curve, providing private_key public_key.x public_key.y")
     
     args = parser.parse_args()
 

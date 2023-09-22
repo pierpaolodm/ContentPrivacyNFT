@@ -78,6 +78,7 @@ def decrypt_image(parameters_path, full_shape, output_path = './output/decrypted
     :return: Decrypted image.
     """
     json_tiles = get_encrypted_image(proof_path,base_name = 'tile')
+    
 
     image_info_file = Path(proof_path) / 'image_info.json'
     if image_info_file.exists():
@@ -86,10 +87,11 @@ def decrypt_image(parameters_path, full_shape, output_path = './output/decrypted
     else:
         raise ValueError("The file image_info.json doesn't exist in the proof directory")
     
+    
 
-
-    decrypted_tiles = list()
-    dim = full_shape.index(min((full_shape[0],full_shape[1])))
+    decrypted_tiles = [0]*(image_info['tiles']+1)
+    dim = full_shape.index(max((full_shape[0],full_shape[1])))
+    
     with open(parameters_path, 'r') as file:
         parameters = json.load(file)
 
@@ -100,10 +102,11 @@ def decrypt_image(parameters_path, full_shape, output_path = './output/decrypted
             width = image_info['tiles_size'][tile_idx][1]
             
             shape = (height,width,full_shape[2])
-            decrypted_tiles.append(decrypt_tile(tile, shape, parameters['ciminion_keys']))
+            decrypted_tiles[tile_idx] = (decrypt_tile(tile, shape, parameters['ciminion_keys']))
 
             bar()
 
+    
     image = np.concatenate(decrypted_tiles, axis=dim)
 
     if output_path is not None:
