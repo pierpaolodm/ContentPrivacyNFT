@@ -34,7 +34,7 @@ def generate_keypair():
     return [[public_key.u.s,public_key.v.s], private_key]
 
 
-def generate_keys(DH_key,number_of_keys = 7):
+def generate_keys(DH_key,number_of_keys = 3):
     """
     Generate a list of keys from a Diffie-Hellman key, for the BabyJubjub curve.
     :param DH_key: Diffie-Hellman key (x,y) tuple of integers
@@ -74,7 +74,7 @@ def main():
     parser.add_argument("--DH-key",
                         nargs=3,
                         type=int,
-                        help = "get the Diffie-Hellman shared key on babyjubjub curve, providing private_key public_key.x public_key.x")
+                        help = "get the Diffie-Hellman shared key on babyjubjub curve, providing private_key public_key.x public_key.y")
     
     args = parser.parse_args()
 
@@ -89,4 +89,4 @@ def main():
         
 
 if __name__ == "__main__":
-    main()
+   main()

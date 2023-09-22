@@ -7,8 +7,11 @@ import subprocess
 import cv2
 import numpy as np
 import requests
-from scripts.babyjubjub_utils.sapling_jubjub import Fq, Point
+from pathlib import Path
+from alive_progress import alive_bar
 
+GREEN_TEXT = "\033[32m"
+RESET_COLOR = "\033[0m"
 
 
 def measure_command(command):
@@ -170,52 +173,46 @@ def upload_proof(proof_path, JWT, image_info, lowimage_path, verbose=False):
     return f"{PINATA_WATCH_URL}/{response.json()['IpfsHash']}"
     
 
-def verify_proof(IPFS_link):
+def verify_proof(proof_path):
     """
-    Verify the proof on IPFS
-    :param IPFS_link: IPFS link to the proof
-    :return: True if the proof is valid, False otherwise
+    This function verify the proof locally
+    :param proof_path: path to the proof file 
     """
-    image_info_request = requests.get(f'{IPFS_link}/image_info.json')
-    if image_info_request.status_code != 200:
-        print(f'Error downloading image info from {IPFS_link}')
-        return False
-    image_info = image_info_request.json()
+    print("Verification process ...")
+    main_directory = Path(proof_path)
 
-    raw_low_image_request = requests.get(f'{IPFS_link}/low_img.png')
-    if raw_low_image_request.status_code != 200:
-        print(f'Error downloading low image from {IPFS_link}')
-        return False
-    raw_low_image = raw_low_image_request.content
-    print('Image info and low image downloaded ...')
+    image_info_file = main_directory / 'image_info.json'
+    if image_info_file.exists():
+        with open(image_info_file, 'r') as json_file:
+            image_info = json.load(json_file)
+    else:
+        raise ValueError("The file image_info.json doesn't exist in the proof directory")
     
-    min_dims_idx = (image_info['height'],image_info['width']).index(min((image_info['height'],image_info['width'])))
-    tile_size = image_info['height'] // (image_info['tiles'] + 1)  if min_dims_idx == 0 else image_info['width'] // (image_info['tiles'] + 1)
-    low_image_offset = 3 + tile_size * 3 * (image_info['height'] if min_dims_idx == 0 else image_info['width'])
-    # 3 because there is the tag, the hash and the commitment for keys
-
-    low_array = np.frombuffer(raw_low_image, np.uint8)
-    low_image = cv2.imdecode(low_array, cv2.IMREAD_COLOR).flatten()
+    low_image_file = main_directory / 'low_image.png'
+    if not low_image_file.exists():
+        raise ValueError("The file low_image.png doesn't exist in the proof directory")
+    low_image = cv2.imread(f'{low_image_file}',cv2.IMREAD_COLOR).flatten()
+    print('Image info and low image loaded ...')
     
 
-    #get the proof for each tile
-    for i in range (image_info['tiles'] + 1):
-        subprocess.getoutput(f'wget -O /tmp/proof{i}.json {IPFS_link}/tile_{i}/proof.json')
-        subprocess.getoutput(f'wget -O /tmp/public{i}.json {IPFS_link}/tile_{i}/public.json')
-        subprocess.getoutput(f'wget -O /tmp/vkey{i}.json {IPFS_link}/tile_{i}/vkey.json')
-        verify_output = subprocess.getoutput(f'snarkjs groth16 verify /tmp/vkey{i}.json /tmp/public{i}.json /tmp/proof{i}.json')
-        
-        #open public.json
-        with open(f'/tmp/public{i}.json', 'r') as file:
-            public = json.load(file)
-        
-        check_low_image = np.array_equal(np.array(public[low_image_offset:low_image_offset + len(low_image)]).astype(np.uint8),
-                                         low_image.astype(np.uint8))
-        
-        if 'OK!' not in verify_output or not check_low_image:
-            print(f'[Tile {i}] not verified')
-            return False
-        print(f'[Tile {i}] verified')
-        subprocess.getoutput(f'rm /tmp/proof{i}.json /tmp/public{i}.json /tmp/vkey{i}.json')
+    dir_list = [x for x in main_directory.iterdir() if x.is_dir()]
     
-    return True
+
+    with alive_bar(total=len(dir_list), bar = 'smooth',spinner = 'waves2') as bar:
+        for i in range(len(dir_list)):
+            subdirectory = dir_list[i]
+            verify_proof = subprocess.getoutput(f'snarkjs groth16 verify {subdirectory}/vkey.json {subdirectory}/public.json {subdirectory}/proof.json')
+            
+            with open(f'{subdirectory}/public.json', 'r') as file:
+                public = json.load(file)
+            tiles_idx = int(subdirectory.name.split('_')[1])
+            low_image_offset = 3 + image_info['tiles_size'][tiles_idx][0] * image_info['tiles_size'][tiles_idx][1] * 3
+            check_low_image = np.array_equal(np.array(public[low_image_offset:low_image_offset + len(low_image)]).astype(np.uint8),low_image.astype(np.uint8))  
+
+            bar()
+            bar.text(f'Tile [{tiles_idx+1}]:{GREEN_TEXT} √{RESET_COLOR}')
+
+            if 'OK!' not in verify_proof or not check_low_image:
+                raise ValueError(f'[Tile {subdirectory}] not verified')
+    print(f'\nAll tiles verified {GREEN_TEXT}√{RESET_COLOR}\n')
+
