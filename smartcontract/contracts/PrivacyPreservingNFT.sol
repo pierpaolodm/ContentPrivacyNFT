@@ -8,11 +8,13 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
+
     struct Bid{
         address bidder;
         uint256[2] publickey;
         uint256 amount; 
     }
+
     struct Token{
         uint256[2] publickey;
         uint256 commitment;
@@ -20,14 +22,16 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
         bool on_sale;
         Bid highest_bid;
     }
+
     uint256 public token_ID;
     mapping(uint256 => Token) public id_to_token;
     mapping(uint256 => Bid) id_to_oldbid; //amount in this case is what he should earn
+    PoseidonT4 poseidon;
 
-    constructor()ERC721("PrivacyPreservingNFT","PPN"){
+    constructor() ERC721("PrivacyPreservingNFT","PPN") Ownable(){
         token_ID = 0;
+        poseidon = new PoseidonT4();
     }
-
 
     /*
     * @dev check if the sender is the owner of the token
@@ -43,7 +47,6 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
     * @param tokenId id of the token
     */
     modifier solvedNFT(uint256 tokenId) {
-        require(_exists(tokenId),"token not exists");
         require(id_to_oldbid[tokenId].publickey[0] == uint256(0) && id_to_oldbid[tokenId].publickey[1] == uint256(0),"token must still be accepted");
         _;
     }
@@ -56,7 +59,7 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
     * @param token_commitment commitment of the token
     * @return the id of the token
     */
-    function mint_token(address owner,string memory token_URI,uint256[2] memory owner_publickey,
+    function mint_token(address owner, string memory token_URI, uint256[2] memory owner_publickey,
                         uint256 token_commitment) public onlyOwner returns (uint256){
         require(CurveBabyJubJub.isOnCurve(owner_publickey[0], owner_publickey[1]), "public key not on curve");
 
@@ -140,7 +143,7 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
         (uint256 x, uint256 y) = CurveBabyJubJub.pointMul(uint256(995203441582195749578291179787384436505546430278305826713579947235728471134),
                                                           uint256(5472060717959818805561601436314318772137091100104008585924551046643952123905),
                                                           privatekey);
-        require((x == id_to_token[tokenId].publickey[0]) && (y == id_to_token[tokenId].publickey[1]), "privatekey is not valid");
+        require((x == id_to_token[tokenId].publickey[0]) && (y == id_to_token[tokenId].publickey[1]), "privatekey of the bidder is not valid");
         
 
         uint256[2] memory publickey = [id_to_oldbid[tokenId].publickey[0],id_to_oldbid[tokenId].publickey[1]];
@@ -149,10 +152,11 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
         uint256[3] memory decrypted_keys;
 
         for (uint8 i = 0; i < 3; i++) 
-            decrypted_keys[i] = uint256(keccak256(abi.encodePacked(DH_x,DH_y,i))) ^ id_to_token[tokenId].enc_keys[i];
-        uint256 new_commitment = PoseidonT4.hash(decrypted_keys);
+            // CIM_KEY = RO(K_ab) ^ ENC_CIM_KEY
+            decrypted_keys[i] = uint256(keccak256(abi.encodePacked(DH_x,DH_y,i))) ^ id_to_token[tokenId].enc_keys[i]; //bit-wise XOR encryption 
+        uint256 new_commitment = poseidon.hash(decrypted_keys);
 
-        require(new_commitment == id_to_token[tokenId].commitment, "encrypted keys recived are correct");
+        require(new_commitment == id_to_token[tokenId].commitment, "encrypted keys received are correct");
         _burn(tokenId);
         payable(msg.sender).transfer(id_to_oldbid[tokenId].amount);
     }

@@ -3,8 +3,6 @@
 import argparse
 from sha3 import keccak_256 # https://stackoverflow.com/questions/46279121/how-can-i-find-keccak-256-hash-in-python con Crypto.hash
 from scripts.babyjubjub_utils.sapling_jubjub import Fq, Point
-from scripts.util import generate_random_field_element
-
 
 def get_DH_key(private_key, public_key):
     """
@@ -18,20 +16,20 @@ def get_DH_key(private_key, public_key):
     DH_key = pubkey * privkey
     return (DH_key.u.s, DH_key.v.s)
     
-def generate_keypair():
-    """
-    Generate a BabyJubjub keypair starting from the generator point.
-    Arguments are taken from https://eips.ethereum.org/EIPS/eip-2494
-    :return: list with the public and private key
-    """
-    G = Point(Fq(995203441582195749578291179787384436505546430278305826713579947235728471134), 
-              Fq(5472060717959818805561601436314318772137091100104008585924551046643952123905))
-    private_key = generate_random_field_element()
-    public_key = G * Fq(private_key)
-    if not public_key.is_on_curve():
-        raise ValueError("Public key is not on curve")
+# def generate_keypair():
+#     """
+#     Generate a BabyJubjub keypair starting from the generator point.
+#     Arguments are taken from https://eips.ethereum.org/EIPS/eip-2494
+#     :return: list with the public and private key
+#     """
+#     G = Point(Fq(995203441582195749578291179787384436505546430278305826713579947235728471134), 
+#               Fq(5472060717959818805561601436314318772137091100104008585924551046643952123905))
+#     private_key = generate_random_field_element()
+#     public_key = G * Fq(private_key)
+#     if not public_key.is_on_curve():
+#         raise ValueError("Public key is not on curve")
     
-    return [[public_key.u.s,public_key.v.s], private_key]
+#     return [[public_key.u.s,public_key.v.s], private_key]
 
 
 def generate_keys(DH_key,number_of_keys = 3):

@@ -9,24 +9,41 @@ import numpy as np
 import requests
 from pathlib import Path
 from alive_progress import alive_bar
+import re
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
+
 
 GREEN_TEXT = "\033[32m"
 RESET_COLOR = "\033[0m"
 
 
-def measure_command(command):
+def measure_command(command, time = True, memory = True):
     """
-    Execute a command and measure the time and memory used
-    :param command: command to execute
-    :return: tuple with the time and memory used
+    Measure the time and memory usage of a specified command.
+
+    :param command: The command to execute and measure.
+    :param time: True if you want to measure time, False otherwise.
+    :param memory: True if you want to measure memory usage, False otherwise.
+
+    :return: A tuple containing the elapsed time (if time=True) and memory usage (if memory=True).
     """
-    time_command = f'/usr/bin/time -p -f "%e %M" {command} > /dev/null'
-    try:
-        command_output = subprocess.getoutput(time_command)
-        time,mem = command_output.split(' ')
-    except:
-        raise ValueError(f'[Error while executing] {command}\n[Error message] {command_output}')
-    return time,mem
+    command = f'/usr/bin/time -p -f "%e %M" {command} > /dev/null'
+
+    process = subprocess.Popen(command, 
+                               shell=True,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    
+
+    command_output = process.communicate()[1].decode('utf-8')
+    print(command_output)
+    numbers = re.findall(r"(\d+\.\d+|\d+)", command_output)
+    t,mem =  tuple(numbers[-2:]) #command_output.split('\n')[0].split(' ')
+    t = float(t)
+    m = float(mem)
+    
+    return t if time else None, m if memory else None
 
 def generate_circuit(info, circuit_template, id = None):
     """
@@ -36,21 +53,36 @@ def generate_circuit(info, circuit_template, id = None):
     :param id: id of the circuit
 
     """
-    out_circuit = circuit_template.split('/')[-1].split('_')[0]
-    os.makedirs('circuits/tiles',exist_ok=True)
+    out_circuit = circuit_template.split('/')[-1].split('.')[0]
+    os.makedirs('circuits/benchmark',exist_ok=True)
 
     with open(circuit_template, 'r') as infile:
         circuit = infile.read()
         for k,v in info.items():
             circuit = circuit.replace(k, str(v))
+        circuit = circuit.replace('//MAIN', '')
         
         id = f'_{id}' if id is not None else ''
-        out_path = f'circuits/tiles/{out_circuit}{id}.circom'
+        out_path = f'circuits/benchmark/{out_circuit}{id}.circom'
         with open(out_path, 'w') as outfile:
             outfile.write(circuit)
     return out_path
 
-def generate_input(output_path,full_image,low_image,commitment_randomness,master_keys):
+
+
+def generate_random_image(height, width = None):
+    """
+    Generate a random image.
+    :param height: Height of the image.
+    :param width: Width of the image.
+    :return: the random image.
+    """
+    if width is None:
+        width = height
+    rimg =  np.random.randint(0, 256, size=(height, width, 3), dtype=np.uint8)
+    return rimg
+
+def generate_input(output_path,f_height,f_width,r_height, r_width, commitment_randomness,master_keys):
     """
     Generate the input for the circuit and save it to a json file
     :param output_path: path to the output file
@@ -59,13 +91,16 @@ def generate_input(output_path,full_image,low_image,commitment_randomness,master
     :param commitment_randomness: randomness used to generate the commitment
     :param master_keys: list with the two master keys for the ciminion authenticated encryption scheme
     """
+
+    img = generate_random_image(f_height,f_width)
+    rsz = resize_image(img,r_height,r_width)
     json_input = {'master_key0':str(master_keys[0]),
                   'master_key1':str(master_keys[1]),
                   'nonce':str(generate_random_field_element()),
                   'IV':str(generate_random_field_element()),
                   'randomness':str(commitment_randomness),
-                  'full_image': np.array(full_image).astype(str).tolist(),
-                  'low_image': np.array(low_image).astype(str).tolist()}
+                  'full_image':img.astype(str).tolist(), 
+                  'resize_image':rsz.astype(str).tolist() }
     with open(output_path, 'w') as outfile:
         json.dump(json_input, outfile)
 
@@ -83,7 +118,36 @@ def parse_operation(operation):
     if op == 'crop':
         height,width,start_x,start_y = infos.split('x')
         return op,{'height':int(height),'width':int(width),'start_x':int(start_x),'start_y':int(start_y)}
-    
+
+def resize_image(image, height, width):
+    """
+    Resize an image to the given dimensions.
+    :param image_path: Path to the image to resize.
+    :param height: Height of the resized image.
+    :param width: Width of the resized image.
+    :return: the resized image.
+    """
+    original_height, original_width, _ = image.shape
+
+    if (original_height-1) % (height-1) != 0 or (original_width-1) % (width-1) != 0:
+        divisors_h = [v+1 for v in range(1, (original_height - 1)//2) if (original_height - 1) % v == 0]
+        divisors_w = [v+1 for v in range(1, (original_width - 1)//2) if (original_width - 1) % v == 0]
+        raise ValueError(f"The image cannot be resized to the given dimensions.\n The height must be one of this numbers: {divisors_h}\
+                          \n The width must be one of this numbers: {divisors_w}")
+
+    return (
+        (
+            tf.compat.v1.image.resize(
+                image,
+                [height, width],
+                align_corners=True,
+                method=tf.image.ResizeMethod.BILINEAR,
+            )
+        )
+        .numpy()
+        .round()
+        .astype(np.uint8)
+    )
 
 def append_to_csv(row,csv_path):
     """
@@ -172,6 +236,9 @@ def upload_proof(proof_path, JWT, image_info, lowimage_path, verbose=False):
     
     return f"{PINATA_WATCH_URL}/{response.json()['IpfsHash']}"
     
+def extract_contraints(r1cs_file):
+    infos = subprocess.check_output(f'snarkjs r1cs info {r1cs_file}',shell=True).decode('utf-8')
+    return int(re.search(r'# of Constraints: (\d+)',infos).group(1))
 
 def verify_proof(proof_path):
     """

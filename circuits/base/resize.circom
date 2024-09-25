@@ -1,4 +1,5 @@
 pragma circom 2.0.0;
+include "../../node_modules/circomlib/circuits/comparators.circom";
 
 template Check_Resize(hFull, wFull, hResize, wResize) {
 
@@ -10,6 +11,8 @@ template Check_Resize(hFull, wFull, hResize, wResize) {
 
     var x_ratio = (wFull - 1) / (wResize - 1);
     var y_ratio = (hFull - 1) / (hResize - 1);
+
+    component equals[hResize*wResize*3];
     
     for (var k = 0; k < 3; k++){
         for (var i = 0; i < hResize; i++) {
@@ -34,8 +37,14 @@ template Check_Resize(hFull, wFull, hResize, wResize) {
                             c * (1 - x_weight) * y_weight +
                             d * x_weight * y_weight;
 
-                resize_image[i][j][k] === pixel;
+                equals[i*wResize*3 + j*3 + k] = IsEqual();
+                equals[i*wResize*3 + j*3 + k].in[0] <== resize_image[i][j][k];
+                equals[i*wResize*3 + j*3 + k].in[1] <== pixel; 
+                equals[i*wResize*3 + j*3 + k].out*equals[i*wResize*3 + j*3 + k].out === 1;
+                
             }
         }
     }
 }
+
+//MAIN component main = Check_Resize(HFULL,WFULL,HRESIZE,WRESIZE);

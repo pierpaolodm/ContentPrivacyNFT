@@ -13,7 +13,7 @@ template ENC_Ciminion(input_size) {
     signal output tag;
 
     assert(input_size % 2 == 0);
-    var nPairs = input_size \ 2;
+    var nPairs = input_size % 2 == 0? input_size \ 2 : (input_size \ 2 ) - 1;
     component ciminion_enc = CiminionEnc(nPairs); 
 
     ciminion_enc.MK_0 <== master_key0;
