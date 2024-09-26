@@ -5,6 +5,7 @@ from ape import project, accounts
 from .util import get_account
 from .contract_management import otp_message, generate_keys, get_DH_key
 
+# To launch the framework
 # npx hardhat node
 # ape run deploy_ppnft --network ::hardhat
 
@@ -66,7 +67,7 @@ def confirm_transfer(contract, NFT_ID, buyer_eth):
 
 def deny_transfer(contract, NFT_ID, secret_buyer, buyer_eth):
 
-    tx_receipt = contract.deny_transfer(NFT_ID, secret_buyer, sender=buyer_eth)
+    tx_receipt = contract.deny_transfer(NFT_ID, secret_buyer, sender=buyer_eth, show_trace=False)
 
     # Check the status of the transaction
     if tx_receipt.status == 1:
@@ -104,13 +105,13 @@ def main():
     confirm_transfer(contract, token_first, buyer_account)
 
     # Second test... wrong symmetric key is passed.
-    # place_bid(contract, BUYER_PUBLICKEY, buyer_account, token_second, 10**9)
+    place_bid(contract, BUYER_PUBLICKEY, buyer_account, token_second, 10**9)
 
-    # DH_KEY = get_DH_key(BUYER_PRIVATEKEY, NFT_PUBLICKEY)
-    # sess_key = generate_keys(DH_KEY)
-    # ENC_KEYS = otp_message(sess_key, [CIM_KEYS[0]+1, CIM_KEYS[1], CIM_KEYS[2]])
-    # accept_bid(contract, ENC_KEYS, account, token_second)
+    DH_KEY = get_DH_key(BUYER_PRIVATEKEY, NFT_PUBLICKEY)
+    sess_key = generate_keys(DH_KEY)
+    ENC_KEYS = otp_message(sess_key, [6378989569467225567309534547136303686644419554308519296145321495775954212673, CIM_KEYS[1], CIM_KEYS[2]])
+    accept_bid(contract, ENC_KEYS, account, token_second)
 
-    # deny_transfer(contract, token_second, BUYER_PRIVATEKEY, buyer_account) TODO fix this
+    deny_transfer(contract, token_second, BUYER_PRIVATEKEY, buyer_account)
 
 

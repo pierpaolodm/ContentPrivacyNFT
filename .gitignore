@@ -35,3 +35,5 @@
 /artifacts/*
 *.csv
 priv
+.env
+gas.txt

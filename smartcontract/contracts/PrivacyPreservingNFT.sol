@@ -26,11 +26,11 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
     uint256 public token_ID;
     mapping(uint256 => Token) public id_to_token;
     mapping(uint256 => Bid) id_to_oldbid; //amount in this case is what he should earn
-    PoseidonT4 poseidon;
+    // PoseidonT4 poseidon;
 
     constructor() ERC721("PrivacyPreservingNFT","PPN") Ownable(){
         token_ID = 0;
-        poseidon = new PoseidonT4();
+        // poseidon = new PoseidonT4();
     }
 
     /*
@@ -154,7 +154,7 @@ contract PrivacyPreservingNFT is ERC721URIStorage, Ownable{
         for (uint8 i = 0; i < 3; i++) 
             // CIM_KEY = RO(K_ab) ^ ENC_CIM_KEY
             decrypted_keys[i] = uint256(keccak256(abi.encodePacked(DH_x,DH_y,i))) ^ id_to_token[tokenId].enc_keys[i]; //bit-wise XOR encryption 
-        uint256 new_commitment = poseidon.hash(decrypted_keys);
+        uint256 new_commitment = PoseidonT4.hash(decrypted_keys);
 
         require(new_commitment == id_to_token[tokenId].commitment, "encrypted keys received are correct");
         _burn(tokenId);
