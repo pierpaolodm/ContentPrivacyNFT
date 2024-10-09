@@ -36,4 +36,5 @@
 *.csv
 priv
 .env
+envname/*
 gas.txt
