@@ -25,3 +25,16 @@
 /smartcontract/.hypothesis/
 /smartcontract/build/
 /smartcontract/reports/
+
+/hardhat.config.js
+/node_modules/*
+/package.json
+/package-lock.json
+/circuits/benchmark/*
+/cache/*
+/artifacts/*
+*.csv
+priv
+.env
+envname/*
+gas.txt

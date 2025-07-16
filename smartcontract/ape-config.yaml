@@ -1,0 +1,32 @@
+name: privacyNFT
+# dependencies:
+#   - name: openzeppelin
+#     github: OpenZeppelin/openzeppelin-contracts
+#     version: 4.6.0
+# compiler:
+#   solc:
+#     remappings:
+#       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.4.2"
+# hardhat:
+#   host: 127.0.0.1:8555
+dependencies:
+  - name: openzeppelin
+    github: OpenZeppelin/openzeppelin-contracts
+    version: 4.6.0
+compiler:
+  solc:
+    version: 0.8.24
+compile:
+  use_dependencies: true
+networks:
+  development:
+    verifier: False
+  ethereum:
+    local:
+      node:
+        chain_id: 31337
+      hardhat:
+        host: 127.0.0.1:8555
+
+  Sepolia:
+    verifier: True
